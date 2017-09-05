@@ -1,53 +1,49 @@
 FROM openjdk:8-jdk-alpine
 
-RUN cd /tmp && \
-  wget http://downloads.sourceforge.net/project/gnuplot/gnuplot/5.0.3/gnuplot-5.0.3.tar.gz && \
-  tar zxf gnuplot-5.0.3.tar.gz  && \
-  cd gnuplot-5.0.3 && \
-  apk --no-cache --update add gd gd-dev libpng libpng-dev libjpeg jpeg-dev freetype freetype-dev && \
-  apk --no-cache --update add --virtual builddeps build-base autoconf automake git python && \
-  ./configure --bindir=/bin && \
-  make && \
-  make install && \
-  apk del builddeps && rm -rf /var/cache/apk/* && \
-  cd / && rm -rf /tmp/gnuplot*
-
-# set timezone
-RUN apk --update add tzdata && \
-  cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime  && \
-  echo "Asia/Shanghai"  >  /etc/timezone && \
-  apk del tzdata
-
-
+ENV GNUPLOT_VER 5.2.0
 ENV TSDB_VERSION 2.3.0
 
-RUN mkdir /opt/opentsdb/
-WORKDIR /opt/opentsdb/
+RUN mkdir -p /opt/
+
+# run opentsdb need `make`
+RUN apk --no-cache --update add bash make
+
 RUN apk --no-cache --update add --virtual builddeps \
     build-base \
     autoconf \
     automake \
     git \
     python \
+    openssl ca-certificates \
+    gd gd-dev libpng libpng-dev libjpeg jpeg-dev freetype freetype-dev \
+  && : +++++++++++++++++ \
   && : Install OpenTSDB and scripts \
+  && cd /opt \
   && wget --no-check-certificate \
     -O v${TSDB_VERSION}.zip \
     https://github.com/OpenTSDB/opentsdb/archive/v${TSDB_VERSION}.zip \
   && unzip v${TSDB_VERSION}.zip \
   && rm v${TSDB_VERSION}.zip \
-  && cd /opt/opentsdb/opentsdb-${TSDB_VERSION} \
+  && cd /opt/opentsdb-${TSDB_VERSION} \
   && ./build.sh \
-  && : because of issue https://github.com/OpenTSDB/opentsdb/issues/707 \
-  && : commented lines do not work. These can be uncommeted when version of \
-  && : tsdb is bumped. Entrypoint will have to be updated too. \
-  && : cd build \
-  && : make install \
-  && : cd / \
-  && : rm -rf /opt/opentsdb/opentsdb-${TSDB_VERSION} \
+  && ln -s /opt/opentsdb-${TSDB_VERSION} /opt/opentsdb \
+  && : +++++++++++++++++ \
+  && : install gnuplot \
+  && cd /tmp \
+  && wget https://downloads.sourceforge.net/project/gnuplot/gnuplot/${GNUPLOT_VER}/gnuplot-${GNUPLOT_VER}.tar.gz \
+  && tar zxf gnuplot-${GNUPLOT_VER}.tar.gz \
+  && cd gnuplot-${GNUPLOT_VER} \
+  && ./configure --bindir=/bin \
+  && make \
+  && make install \
+  && : +++++++++++++++++ \
+  && : delete not used packages \
   && apk del builddeps \
-  && rm -rf /var/cache/apk/*
+  && rm -rf /var/cache/apk/* \
+  && cd / && rm -rf /tmp/gnuplot*
 
 EXPOSE 4242
+WORKDIR /opt/opentsdb/
 
 COPY etc/opentsdb.conf /opt/opentsdb/
 
