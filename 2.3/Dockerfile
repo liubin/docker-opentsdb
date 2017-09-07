@@ -15,7 +15,6 @@ RUN apk --no-cache --update add --virtual builddeps \
     git \
     python \
     openssl ca-certificates \
-    gd gd-dev libpng libpng-dev libjpeg jpeg-dev freetype freetype-dev \
   && : +++++++++++++++++ \
   && : Install OpenTSDB and scripts \
   && cd /opt \
@@ -29,6 +28,7 @@ RUN apk --no-cache --update add --virtual builddeps \
   && ln -s /opt/opentsdb-${TSDB_VERSION} /opt/opentsdb \
   && : +++++++++++++++++ \
   && : install gnuplot \
+  && apk --no-cache --update add gd gd-dev libpng libpng-dev libjpeg jpeg-dev freetype freetype-dev libwebp libwebp-dev \
   && cd /tmp \
   && wget https://downloads.sourceforge.net/project/gnuplot/gnuplot/${GNUPLOT_VER}/gnuplot-${GNUPLOT_VER}.tar.gz \
   && tar zxf gnuplot-${GNUPLOT_VER}.tar.gz \
