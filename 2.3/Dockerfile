@@ -25,6 +25,9 @@ RUN apk --no-cache --update add --virtual builddeps \
   && rm v${TSDB_VERSION}.zip \
   && cd /opt/opentsdb-${TSDB_VERSION} \
   && ./build.sh \
+  && : +++++++++++++++++ \
+  && : do some clean to reduce image size \
+  && rm -rf build/gwt-unitCache/* \
   && ln -s /opt/opentsdb-${TSDB_VERSION} /opt/opentsdb \
   && : +++++++++++++++++ \
   && : install gnuplot \
